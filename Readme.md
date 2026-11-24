@@ -2,7 +2,7 @@
 
 A hands-on exploration of **Retrieval-Augmented Generation (RAG)**, built in Python notebooks using locally hosted language and embedding models. The project moves from a basic retrieve-then-generate pipeline to more advanced approaches for **query translation, indexing, routing, retrieval, reranking, and answer validation**.
 
-The main LLM is **Llama 3.2** served through **Ollama**; most embedding-based examples use **`nomic-embed-text`**. LangChain connects the components, and Chroma provides vector search. The notebooks are experiments and learning exercises, rather than a single deployed application.
+The main LLM is **Llama 3.2** served through **Ollama**; most embedding-based examples use **`nomic-embed-text`**. LangChain connects the components, Chroma provides vector search, and LangSmith supports tracing and debugging of the RAG workflows. The notebooks are experiments and learning exercises, rather than a single deployed application.
 
 ## What I explored
 
@@ -84,7 +84,31 @@ These are notebook-level demonstrations. The grading prompts use an LLM's own ju
 
 **Additional retrieval tools:** Sentence Transformers (cross-encoder), RAGatouille / ColBERT
 
-**Other tools used in individual examples:** LangSmith, `tiktoken`, `requests`, and YouTube transcript loading
+**Observability:** LangSmith — optional tracing and debugging of LangChain/LLM workflows
+
+**Other tools used in individual examples:** `tiktoken`, `requests`, and YouTube transcript loading
+
+## LangSmith tracing
+
+I also explored **LangSmith** alongside the Ollama-based RAG notebooks. LangSmith is an observability platform for inspecting LLM application runs; it complements LangChain rather than replacing the local model or vector database.
+
+With tracing enabled, it can help me:
+
+- Follow the steps of a RAG chain, including prompt preparation, model calls, and retrieval operations that are instrumented.
+- Inspect prompts, responses, intermediate steps, and errors while debugging notebook experiments.
+- Compare how changes to retrieval or prompting affect the execution flow.
+
+The notebooks configure LangSmith tracing, and the Query Translation notebook also uses the LangSmith client to obtain a RAG prompt. **The language model and embeddings still run locally through Ollama**; LangSmith is a separate hosted service, so trace data can be sent to LangSmith when tracing is enabled.
+
+To enable tracing for your own runs, create a LangSmith API key and set the environment variables in your terminal before starting Jupyter or VS Code:
+
+```bash
+export LANGSMITH_TRACING=true
+export LANGSMITH_API_KEY="your_langsmith_api_key"
+export LANGSMITH_PROJECT="rag-from-scratch-ollama"
+```
+
+Tracing is optional for the core Ollama RAG pipeline. **Do not commit API keys or a `.env` file containing secrets to GitHub.** Avoid tracing sensitive document content unless you have reviewed the data-sharing implications.
 
 ## Getting started
 
@@ -140,17 +164,13 @@ jupyter notebook
 
 You can also open the `.ipynb` files directly in VS Code and select the Python interpreter from `.venv`. Start with `rag_from_scratch_overview.ipynb` to understand the basic pipeline, then explore the other notebooks by topic. Some cells depend on objects created earlier in the same notebook, so run them in order.
 
-### Optional: LangSmith tracing
-
-Several notebooks prompt for a **LangSmith API key** to enable tracing, and some use public prompts hosted through LangSmith. Tracing is separate from local LLM inference: **Ollama itself does not require an OpenAI API key**. If you use LangSmith, note that traces may include prompts, retrieved text, and model outputs sent to that service. Avoid sharing sensitive data and never commit API keys.
-
 ## Notes and current limitations
 
 - The notebooks are **educational experiments**, not a unified API, UI, or production deployment.
 - The web-document and Wikipedia examples depend on external content being reachable. ColBERT and the cross-encoder download separate pretrained model weights.
-- In `rag_from_scratch_overview.ipynb`, one saved cell raises an `ImportError` for `from langchain import hub` in the installed LangChain version. The basic Ollama RAG cells before it show recorded outputs; the later chain should be checked against the installed package versions.
 - The routing notebook's tutorial-search section defines a `TutorialSearch` schema, but its later `query_analyzer` uses the previously defined `structured_llm` object, which was configured with `RouteQuery`. That section needs to bind the model to `TutorialSearch` to consistently produce the intended fields.
 - The corrective retrieval example assumes the rewritten-query branch has run when it accesses `new_docs` in the next cell. A reusable version would handle the no-rewrite path explicitly.
+- LangSmith tracing requires a separate account and API key when enabled; it is not required for local Ollama inference.
 - No formal benchmark, latency comparison, accuracy score, or deployed endpoint is provided in these notebooks. The printed examples should not be interpreted as measured improvement over a baseline.
 
 ## Project layout
@@ -170,4 +190,3 @@ The filenames above match the notebooks provided, including the current `ran_fro
 ## Background and attribution
 
 This is my **Ollama-based implementation and exploration** of RAG techniques while learning from the broader *RAG from Scratch* tutorial material. The original reference repository is **not my original work**, and this README describes only the code and experiments present in my own five notebooks. It does not claim ownership of the reference materials or of the externally downloaded pretrained models.
-
